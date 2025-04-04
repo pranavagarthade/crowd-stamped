@@ -13,7 +13,7 @@ model = YOLO("yolov8s.pt")
 
 # Open two video sources (Laptop webcam & Mobile camera)
 cap1 = cv2.VideoCapture(0)  
-cap2 = cv2.VideoCapture("http://192.168.137.62:4747/video")  
+cap2 = cv2.VideoCapture("http://192.168.137.62:8080/video")  
 
 def generate_frames(camera_id, cap):
     """ Function to generate frames for each camera """
