@@ -192,10 +192,11 @@
   </header>
 
   <div id="alert-box">
-    Crowd detected at Main Entrance. Please use the Secondary Exit.
+    <!-- Alert will be injected dynamically -->
   </div>
 
   <div class="dashboard">
+    <!-- Camera 1 -->
     <div class="camera-card">
       <div class="card-header">
         <span>Camera 1 (Laptop Webcam)</span>
@@ -210,6 +211,7 @@
       </div>
     </div>
 
+    <!-- Camera 2 -->
     <div class="camera-card">
       <div class="card-header">
         <span>Camera 2 (Mobile Camera)</span>
@@ -220,6 +222,21 @@
         <div class="feed-overlay">
           <span>Secondary Exit</span>
           <span>People: <strong id="count2">0</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Camera 3 -->
+    <div class="camera-card">
+      <div class="card-header">
+        <span>Camera 3 (Mobile Camera)</span>
+        <div class="status"><span class="status-indicator"></span>Live</div>
+      </div>
+      <div class="camera-feed">
+        <img id="camera3" src="/api/placeholder/400/320" alt="Camera 3 Feed">
+        <div class="feed-overlay">
+          <span>Tertiary Exit</span>
+          <span>People: <strong id="count3">0</strong></span>
         </div>
       </div>
     </div>
@@ -256,6 +273,7 @@
     let startTime = new Date();
     let camera1Count = 0;
     let camera2Count = 0;
+    let camera3Count = 0;
 
     setInterval(function () {
       let now = new Date();
@@ -283,8 +301,17 @@
       }
     });
 
+    socket.on("video_frame_camera3", function (data) {
+      document.getElementById("camera3").src = "data:image/jpeg;base64," + data.image;
+      if (data.peopleCount !== undefined) {
+        camera3Count = data.peopleCount;
+        document.getElementById("count3").textContent = camera3Count;
+        updateStats();
+      }
+    });
+
     function updateStats() {
-  const totalCount = camera1Count + camera2Count;
+  const totalCount = camera1Count + camera2Count + camera3Count;
   document.getElementById("total-count").textContent = totalCount;
 
   let density = "Low";
@@ -296,23 +323,39 @@
   if (totalCount > 50) risk = "High";
   else if (totalCount > 30) risk = "Moderate";
   document.getElementById("risk-level").textContent = risk;
+  document.getElementById("risk-level").style.color =
+    risk === "High" ? "#e74c3c" :
+    risk === "Moderate" ? "#f39c12" :
+    "#2ecc71";
 
-  const riskElement = document.getElementById("risk-level");
-  riskElement.style.color = risk === "High" ? "#e74c3c" : risk === "Moderate" ? "#f39c12" : "#2ecc71";
-
+  // Smart crowd redirection
   const alertBox = document.getElementById("alert-box");
+  const crowded1 = camera1Count > 10;
+  const crowded2 = camera2Count > 10;
+  const crowded3 = camera3Count > 10;
 
-  if (camera1Count > 3 && camera1Count > camera2Count) {
-    alertBox.style.display = "block";
-    alertBox.textContent = "Crowd detected at Main Entrance. Please use the Secondary Exit.";
-  } else if (camera2Count > 3 && camera2Count > camera1Count) {
-    alertBox.style.display = "block";
-    alertBox.textContent = "Crowd detected at Secondary Exit. Please use the Main Entrance.";
+  let suggestion = "";
+
+  if (crowded1) {
+    if (!crowded2) suggestion = "Secondary Exit (Camera 2)";
+    else if (!crowded3) suggestion = "Tertiary Exit (Camera 3)";
+    else suggestion = "All paths are crowded. Use emergency protocol.";
+  } else if (crowded2) {
+    if (!crowded3) suggestion = "Tertiary Exit (Camera 3)";
+    else if (!crowded1) suggestion = "Main Entrance (Camera 1)";
+    else suggestion = "All paths are crowded. Use emergency protocol.";
+  } else if (crowded3) {
+    if (!crowded2) suggestion = "Secondary Exit (Camera 2)";
+    else if (!crowded1) suggestion = "Main Entrance (Camera 1)";
+    else suggestion = "All paths are crowded. Use emergency protocol.";
   } else {
     alertBox.style.display = "none";
+    return;
   }
-}
 
+  alertBox.innerHTML = `<strong>Attention:</strong> Redirect people to <strong>${suggestion}</strong>`;
+  alertBox.style.display = "block";
+}
   </script>
 </body>
 </html>

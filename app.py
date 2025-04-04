@@ -11,9 +11,10 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 model = YOLO("yolov8s.pt")
 
-# Open two video sources (Laptop webcam & Mobile camera)
+# Open three video sources (Laptop webcam, Mobile camera 1, Mobile camera 2)
 cap1 = cv2.VideoCapture(0)
 cap2 = cv2.VideoCapture("http://192.168.137.62:8080/video")
+cap3 = cv2.VideoCapture("http://172.16.7.153:8080/video")  # Make sure URL is correct (check `:` placement)
 
 def generate_frames(camera_id, cap):
     """ Function to generate frames for each camera """
@@ -55,6 +56,7 @@ def connect():
     print("Client connected")
     socketio.start_background_task(generate_frames, "camera1", cap1)
     socketio.start_background_task(generate_frames, "camera2", cap2)
+    socketio.start_background_task(generate_frames, "camera3", cap3)  # ← Add this line
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
