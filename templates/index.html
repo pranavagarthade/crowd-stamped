@@ -3,205 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Crowd Detection</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <title>Crowd Detection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <style>
-        /* Modern color scheme and font */
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --background-color: #f8f9fa;
-            --text-color: #333;
-            --accent-color: #e74c3c;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --border-radius: 8px;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 800px;
-            padding: 20px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        h1 {
-            color: var(--secondary-color);
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            position: relative;
-            display: inline-block;
-        }
-        
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 4px;
-            background-color: var(--primary-color);
-            border-radius: 2px;
-        }
-        
-        .subtitle {
-            color: #777;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-        }
-        
-        .video-container {
-            width: 100%;
-            position: relative;
-            margin-bottom: 30px;
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-        
-        #videoFeed {
-            width: 100%;
-            height: auto;
-            display: block;
-            background-color: #ddd;
-        }
-        
-        .status-bar {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 15px;
-            border-radius: var(--border-radius);
-            margin-top: 20px;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .status-indicator {
-            display: flex;
-            align-items: center;
-        }
-        
-        .indicator-dot {
-            width: 12px;
-            height: 12px;
-            background-color: #2ecc71;
-            border-radius: 50%;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
-            }
-            
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
-            }
-            
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
-            }
-        }
-        
-        footer {
-            margin-top: 30px;
-            text-align: center;
-            color: #777;
-            font-size: 0.9rem;
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .subtitle {
-                font-size: 1rem;
-            }
-        }
+        body { text-align: center; font-family: Arial, sans-serif; }
+        .container { display: flex; justify-content: center; gap: 20px; }
+        img { width: 45%; border: 2px solid black; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Live Crowd Detection</h1>
-            <p class="subtitle">Real-time crowd monitoring and analysis</p>
-        </header>
-        
-        <div class="video-container">
-            <img id="videoFeed" alt="Live video feed">
-        </div>
-        
-        <div class="status-bar">
-            <div class="status-indicator">
-                <div class="indicator-dot"></div>
-                <span>Live stream active</span>
-            </div>
-            <div class="status-text" id="detectionStatus">Monitoring...</div>
-        </div>
-        
-        <footer>
-            <p>&copy; 2025 Crowd Detection System. All rights reserved.</p>
-        </footer>
-    </div>
-    
-    <script>
-        var socket = io.connect('http://' + document.domain + ':' + location.port);
 
-        socket.on('video_frame', function(data) {
-            document.getElementById('videoFeed').src = 'data:image/jpeg;base64,' + data.image;
+    <h1>Crowd Detection from Two Cameras</h1>
+
+    <div class="container">
+        <div>
+            <h2>Camera 1 (Laptop Webcam)</h2>
+            <img id="camera1" src="" alt="Camera 1 Feed">
+        </div>
+        <div>
+            <h2>Camera 2 (Mobile Camera)</h2>
+            <img id="camera2" src="" alt="Camera 2 Feed">
+        </div>
+    </div>
+
+    <script>
+        var socket = io.connect("http://localhost:5000");
+
+        // Update Camera 1 feed
+        socket.on("video_frame_camera1", function(data) {
+            document.getElementById("camera1").src = "data:image/jpeg;base64," + data.image;
         });
-        
-        // Optional: Update the detection status text based on crowd information
-        // Uncomment if your backend provides this data
-        /*
-        socket.on('detection_data', function(data) {
-            let statusElement = document.getElementById('detectionStatus');
-            if (data.crowd_count > 50) {
-                statusElement.textContent = `High occupancy: ${data.crowd_count} people`;
-                statusElement.style.color = '#e74c3c';
-            } else if (data.crowd_count > 20) {
-                statusElement.textContent = `Moderate occupancy: ${data.crowd_count} people`;
-                statusElement.style.color = '#f39c12';
-            } else {
-                statusElement.textContent = `Low occupancy: ${data.crowd_count} people`;
-                statusElement.style.color = '#2ecc71';
-            }
+
+        // Update Camera 2 feed
+        socket.on("video_frame_camera2", function(data) {
+            document.getElementById("camera2").src = "data:image/jpeg;base64," + data.image;
         });
-        */
     </script>
+
 </body>
 </html>
