@@ -1,44 +1,318 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crowd Detection</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        .container { display: flex; justify-content: center; gap: 20px; }
-        img { width: 45%; border: 2px solid black; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crowd Detection System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --light-bg: #f5f7fa;
+      --dark-text: #2c3e50;
+      --light-text: #ecf0f1;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --border-radius: 8px;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-bg);
+      color: var(--dark-text);
+      padding: 20px;
+    }
+
+    header {
+      background-color: var(--secondary-color);
+      color: var(--light-text);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      margin-bottom: 30px;
+      box-shadow: var(--shadow);
+    }
+
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .camera-card {
+      background: white;
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      flex: 1;
+      min-width: 320px;
+      max-width: 500px;
+      transition: transform 0.3s ease;
+    }
+
+    .camera-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-header {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 15px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background-color: #2ecc71;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .camera-feed {
+      position: relative;
+      aspect-ratio: 16/9;
+      background-color: #2c3e50;
+    }
+
+    .camera-feed img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: none;
+    }
+
+    .feed-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 10px;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .stats-container {
+      background: white;
+      border-radius: var(--border-radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 30px;
+    }
+
+    .stats-title {
+      font-size: 1.4rem;
+      margin-bottom: 15px;
+      color: var(--secondary-color);
+      border-bottom: 2px solid var(--primary-color);
+      padding-bottom: 8px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: var(--light-bg);
+      padding: 15px;
+      border-radius: var(--border-radius);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-color);
+      margin: 5px 0;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--secondary-color);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      padding: 20px;
+      color: var(--secondary-color);
+      font-size: 0.9rem;
+    }
+
+    #alert-box {
+      display: none;
+      padding: 15px;
+      background-color: #e74c3c;
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { background-color: #e74c3c; }
+      50% { background-color: #c0392b; }
+      100% { background-color: #e74c3c; }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard {
+        flex-direction: column;
+      }
+      .camera-card {
+        max-width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Crowd Detection System</h1>
+    <p class="subtitle">Real-time monitoring and stampede prevention</p>
+  </header>
 
-    <h1>Crowd Detection from Two Cameras</h1>
+  <div id="alert-box">
+    Crowd detected at Main Entrance. Please use the Secondary Exit.
+  </div>
 
-    <div class="container">
-        <div>
-            <h2>Camera 1 (Laptop Webcam)</h2>
-            <img id="camera1" src="" alt="Camera 1 Feed">
+  <div class="dashboard">
+    <div class="camera-card">
+      <div class="card-header">
+        <span>Camera 1 (Laptop Webcam)</span>
+        <div class="status"><span class="status-indicator"></span>Live</div>
+      </div>
+      <div class="camera-feed">
+        <img id="camera1" src="/api/placeholder/400/320" alt="Camera 1 Feed">
+        <div class="feed-overlay">
+          <span>Main Entrance</span>
+          <span>People: <strong id="count1">0</strong></span>
         </div>
-        <div>
-            <h2>Camera 2 (Mobile Camera)</h2>
-            <img id="camera2" src="" alt="Camera 2 Feed">
-        </div>
+      </div>
     </div>
 
-    <script>
-        var socket = io.connect("http://localhost:5000");
+    <div class="camera-card">
+      <div class="card-header">
+        <span>Camera 2 (Mobile Camera)</span>
+        <div class="status"><span class="status-indicator"></span>Live</div>
+      </div>
+      <div class="camera-feed">
+        <img id="camera2" src="/api/placeholder/400/320" alt="Camera 2 Feed">
+        <div class="feed-overlay">
+          <span>Secondary Exit</span>
+          <span>People: <strong id="count2">0</strong></span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Update Camera 1 feed
-        socket.on("video_frame_camera1", function(data) {
-            document.getElementById("camera1").src = "data:image/jpeg;base64," + data.image;
-        });
+  <div class="stats-container">
+    <h2 class="stats-title">Crowd Analytics</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="total-count">0</div>
+        <div class="stat-label">Total People</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="density">Low</div>
+        <div class="stat-label">Crowd Density</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="risk-level">Normal</div>
+        <div class="stat-label">Risk Level</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="monitoring-time">00:00</div>
+        <div class="stat-label">Monitoring Time</div>
+      </div>
+    </div>
+  </div>
 
-        // Update Camera 2 feed
-        socket.on("video_frame_camera2", function(data) {
-            document.getElementById("camera2").src = "data:image/jpeg;base64," + data.image;
-        });
-    </script>
+  <footer>
+    <p>© 2025 Crowd Detection System | All Rights Reserved</p>
+  </footer>
 
+  <script>
+    var socket = io.connect("http://localhost:5000");
+    let startTime = new Date();
+    let camera1Count = 0;
+    let camera2Count = 0;
+
+    setInterval(function () {
+      let now = new Date();
+      let diff = Math.floor((now - startTime) / 1000);
+      let minutes = Math.floor(diff / 60).toString().padStart(2, '0');
+      let seconds = (diff % 60).toString().padStart(2, '0');
+      document.getElementById("monitoring-time").textContent = `${minutes}:${seconds}`;
+    }, 1000);
+
+    socket.on("video_frame_camera1", function (data) {
+      document.getElementById("camera1").src = "data:image/jpeg;base64," + data.image;
+      if (data.peopleCount !== undefined) {
+        camera1Count = data.peopleCount;
+        document.getElementById("count1").textContent = camera1Count;
+        updateStats();
+      }
+    });
+
+    socket.on("video_frame_camera2", function (data) {
+      document.getElementById("camera2").src = "data:image/jpeg;base64," + data.image;
+      if (data.peopleCount !== undefined) {
+        camera2Count = data.peopleCount;
+        document.getElementById("count2").textContent = camera2Count;
+        updateStats();
+      }
+    });
+
+    function updateStats() {
+  const totalCount = camera1Count + camera2Count;
+  document.getElementById("total-count").textContent = totalCount;
+
+  let density = "Low";
+  if (totalCount > 50) density = "High";
+  else if (totalCount > 20) density = "Medium";
+  document.getElementById("density").textContent = density;
+
+  let risk = "Normal";
+  if (totalCount > 50) risk = "High";
+  else if (totalCount > 30) risk = "Moderate";
+  document.getElementById("risk-level").textContent = risk;
+
+  const riskElement = document.getElementById("risk-level");
+  riskElement.style.color = risk === "High" ? "#e74c3c" : risk === "Moderate" ? "#f39c12" : "#2ecc71";
+
+  const alertBox = document.getElementById("alert-box");
+
+  if (camera1Count > 3 && camera1Count > camera2Count) {
+    alertBox.style.display = "block";
+    alertBox.textContent = "Crowd detected at Main Entrance. Please use the Secondary Exit.";
+  } else if (camera2Count > 3 && camera2Count > camera1Count) {
+    alertBox.style.display = "block";
+    alertBox.textContent = "Crowd detected at Secondary Exit. Please use the Main Entrance.";
+  } else {
+    alertBox.style.display = "none";
+  }
+}
+
+  </script>
 </body>
 </html>

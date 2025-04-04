@@ -12,8 +12,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 model = YOLO("yolov8s.pt")
 
 # Open two video sources (Laptop webcam & Mobile camera)
-cap1 = cv2.VideoCapture(0)  
-cap2 = cv2.VideoCapture("http://192.168.137.62:8080/video")  
+cap1 = cv2.VideoCapture(0)
+cap2 = cv2.VideoCapture("http://192.168.137.62:8080/video")
 
 def generate_frames(camera_id, cap):
     """ Function to generate frames for each camera """
@@ -36,11 +36,14 @@ def generate_frames(camera_id, cap):
 
         cv2.putText(frame, f"People Count: {people_count}", (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])  
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 90])
         frame_b64 = base64.b64encode(buffer).decode('utf-8')
 
-        # Emit different events for camera1 and camera2
-        socketio.emit(f'video_frame_{camera_id}', {'image': frame_b64})
+        # Emit both frame and count
+        socketio.emit(f'video_frame_{camera_id}', {
+            'image': frame_b64,
+            'peopleCount': people_count
+        })
         eventlet.sleep(0.05)
 
 @app.route('/')
