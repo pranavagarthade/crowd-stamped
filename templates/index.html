@@ -264,6 +264,13 @@
     </div>
   </div>
 
+  <!-- <div style="text-align: center; margin-top: 30px;">
+    <button onclick="showGraph()" style="padding: 12px 24px; font-size: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; box-shadow: var(--shadow);">
+      Show Crowd Trend Graph
+    </button>
+    <img id="trendGraph" src="" style="display: none; max-width: 90%; margin-top: 20px; border-radius: 8px; box-shadow: var(--shadow);" />
+  </div>   -->
+
   <footer>
     <p>© 2025 Crowd Detection System | All Rights Reserved</p>
   </footer>
@@ -315,13 +322,13 @@
   document.getElementById("total-count").textContent = totalCount;
 
   let density = "Low";
-  if (totalCount > 50) density = "High";
-  else if (totalCount > 20) density = "Medium";
+  if (totalCount > 3) density = "High";
+  else if (totalCount > 2) density = "Medium";
   document.getElementById("density").textContent = density;
 
   let risk = "Normal";
-  if (totalCount > 50) risk = "High";
-  else if (totalCount > 30) risk = "Moderate";
+  if (totalCount > 5) risk = "High";
+  else if (totalCount > 3) risk = "Moderate";
   document.getElementById("risk-level").textContent = risk;
   document.getElementById("risk-level").style.color =
     risk === "High" ? "#e74c3c" :
@@ -356,6 +363,24 @@
   alertBox.innerHTML = `<strong>Attention:</strong> Redirect people to <strong>${suggestion}</strong>`;
   alertBox.style.display = "block";
 }
+// function showGraph() {
+//     fetch("/trend-graph")
+//       .then(response => {
+//         if (!response.ok) throw new Error("Graph fetch failed");
+//         return response.blob();
+//       })
+//       .then(blob => {
+//         const url = URL.createObjectURL(blob);
+//         const img = document.getElementById("trendGraph");
+//         img.src = url;
+//         img.style.display = "block";
+//       })
+//       .catch(err => {
+//         console.error("Error loading graph:", err);
+//         alert("Failed to load trend graph. Please try again.");
+//       });
+//   }
+
   </script>
 </body>
 </html>
